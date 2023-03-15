@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-class animation extends StatelessWidget {
+
+class videopage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Animation',
+        'video',
         style: TextStyle(fontSize: 30.0),
       ),
     );

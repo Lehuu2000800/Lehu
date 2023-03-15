@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 
 
-class HomePage extends StatelessWidget {
+class homepage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Home',
-        style: TextStyle(fontSize: 30.0),
+    return Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('asset/images/background.jpg'),fit: BoxFit.cover)),
+      child: Center(
+        child: Text(
+          'Home',
+          style: TextStyle(fontSize: 30.0),
+        ),
       ),
     );
   }

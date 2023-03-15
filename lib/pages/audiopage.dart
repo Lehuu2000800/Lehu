@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class Page2 extends StatelessWidget {
+class audiopage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Page 2',
+        'Audio',
         style: TextStyle(fontSize: 30.0),
       ),
     );
