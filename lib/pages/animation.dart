@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class Page1 extends StatelessWidget {
+class animation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Page 1',
+        'Animation',
         style: TextStyle(fontSize: 30.0),
       ),
     );
