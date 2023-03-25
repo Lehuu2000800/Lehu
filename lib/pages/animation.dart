@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 
-class animation extends StatelessWidget {
+class animations extends StatefulWidget {
+  const animations({super.key});
+
+  @override
+  State<animations> createState() => _animationsState();
+}
+
+class _animationsState extends State<animations> {
+
+  List<Container> daftarAnimasi = [];
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Animation',
-        style: TextStyle(fontSize: 30.0),
+    return new Scaffold(
+      appBar: new AppBar(
+        title: new Text("Animations"),
+      ),
+      body: new GridView.count(
+        crossAxisCount: 2,
+        children: daftarAnimasi,
       ),
     );
   }

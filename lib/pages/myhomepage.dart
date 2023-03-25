@@ -6,15 +6,21 @@ import 'package:unp_asset/pages/homepage.dart';
 import 'package:unp_asset/pages/imagespage.dart';
 import 'package:unp_asset/pages/videopage.dart';
 
-
 class MyHomePage extends StatefulWidget {
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
-class _MyHomePageState extends State<MyHomePage> {
-  int _selectedIndex = 0;
 
-  List<Widget> _pages = [    homepage(),    ImageUpload(),    videopage(),    audiopage(), animation(), ];
+class _MyHomePageState extends State<MyHomePage> {
+  List<Widget> _pages = [
+    homepage(),
+    ImageGallery(),
+    VideoListPage(),
+    audiopage(),
+    animations(),
+  ];
+
+  int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -37,14 +43,18 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.account_circle, size: 35, color: Colors.black,),
+            icon: Icon(
+              Icons.account_circle,
+              size: 35,
+              color: Colors.black,
+            ),
             onPressed: () {
               Navigator.pushNamed(context, '/profile');
             },
           ),
         ],
       ),
-      body:  _pages[_selectedIndex] ,
+      body: _pages[_selectedIndex],
       bottomNavigationBar: CurvedNavigationBar(
         backgroundColor: Colors.white,
         buttonBackgroundColor: Color.fromRGBO(212, 129, 102, 1),
