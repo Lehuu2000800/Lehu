@@ -1,89 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:unp_asset/profil/user.dart';
+import 'package:unp_asset/details/uploadFile.dart';
+import 'package:unp_asset/profil/signIn.dart';
 
-class LoginPage extends StatefulWidget {
-  final List<User> users;
-
-  LoginPage({required this.users});
-
-  @override
-  _LoginPageState createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  late TextEditingController _usernameController;
-  late TextEditingController _passwordController;
-
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _usernameController = TextEditingController();
-    _passwordController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _login() {
-    final username = _usernameController.text;
-    final password = _passwordController.text;
-
-    final user = widget.users.firstWhere((u) => u.username == username && u.password == password, );
-
-    if (user != null) {
-      Navigator.pushReplacementNamed(context, '/home', arguments: user);
-    } else {
-      setState(() {
-        _errorMessage = 'Invalid username or password';
-      });
-    }
-  }
-
+class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        backgroundColor: Color.fromRGBO(212, 129, 102, 1),
+        title: Text('Login Page'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
-              controller: _usernameController,
-              decoration: InputDecoration(
-                labelText: 'Username',
-              ),
+            Image.asset(
+              'asset/images/logoasset.png',
+              width: 200,
+              height: 200,
             ),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-              ),
-            ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _login,
-              child: Text('Login'),
-            ),
-            if (_errorMessage != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
+            SizedBox(height: 20),
+            Expanded(
+              child: Center(
                 child: Text(
-                  _errorMessage!,
+                  'Upss kamu belum memiliki akun. Mulai buat akun agar bisa menggunakan fitur di UNP ASSET lebih mudah',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.red,
+                    fontSize: 16,
+                    color: Colors.grey[600],
                   ),
                 ),
               ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(
+                      Color.fromRGBO(212, 129, 102, 1),
+                    ),
+                  ),
+                  child: Text('Sign In'),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SignInPage()),
+                    );
+                  },
+                ),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(
+                      Color.fromRGBO(212, 129, 102, 1),
+                    ),
+                  ),
+                  child: Text('Sign Up'),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+            Padding(
+              padding: EdgeInsets.all(65.0),
+              child: ElevatedButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(
+                    Color.fromRGBO(212, 129, 102, 1),
+                  ),
+                ),
+                child: Text('Upload'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => UploadPage()),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

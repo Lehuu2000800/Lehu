@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:unp_asset/profil/akun.dart';
-import 'pages/myhomepage.dart';
+import 'myhomepage.dart';
 
 void main() {
   runApp(MyApp());
@@ -14,11 +14,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: MyHomePage(),
       routes: {
-        '/profile': (context) => LoginPage(users: [],),
+        '/profile': (context) => LoginPage(
+              
+            ),
       },
     );
   }
 }
-
-
-
