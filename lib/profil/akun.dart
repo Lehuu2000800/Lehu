@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:unp_asset/details/uploadFile.dart';
 import 'package:unp_asset/profil/signIn.dart';
+// import 'package:unp_asset/profil/signUp.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -26,7 +27,7 @@ class LoginPage extends StatelessWidget {
                   'Upss kamu belum memiliki akun. Mulai buat akun agar bisa menggunakan fitur di UNP ASSET lebih mudah',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: Colors.grey[600],
                   ),
                 ),
@@ -42,7 +43,10 @@ class LoginPage extends StatelessWidget {
                       Color.fromRGBO(212, 129, 102, 1),
                     ),
                   ),
-                  child: Text('Sign In'),
+                  child: Text('Login',
+                  style: TextStyle(
+                    fontSize: 20,
+                  ),),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -50,35 +54,9 @@ class LoginPage extends StatelessWidget {
                     );
                   },
                 ),
-                ElevatedButton(
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                      Color.fromRGBO(212, 129, 102, 1),
-                    ),
-                  ),
-                  child: Text('Sign Up'),
-                  onPressed: () {},
-                ),
               ],
             ),
-            SizedBox(height: 20),
-            Padding(
-              padding: EdgeInsets.all(65.0),
-              child: ElevatedButton(
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(
-                    Color.fromRGBO(212, 129, 102, 1),
-                  ),
-                ),
-                child: Text('Upload'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => UploadPage()),
-                  );
-                },
-              ),
-            ),
+            SizedBox(height: 250),
           ],
         ),
       ),

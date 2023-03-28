@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import './signup.dart';
 
-class SignInPage extends StatefulWidget {
+class SignUpPage extends StatefulWidget {
   @override
-  _SignInPageState createState() => _SignInPageState();
+  _SignUpPageState createState() => _SignUpPageState();
 }
 
-class _SignInPageState extends State<SignInPage> {
+class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,7 +20,7 @@ class _SignInPageState extends State<SignInPage> {
             ),
             SizedBox(height: 16.0),
             Text(
-              'Lets Sign You In',
+              'Lets Sign You Up',
               style: TextStyle(
                 fontSize: 24.0,
                 fontWeight: FontWeight.bold,
@@ -35,6 +34,13 @@ class _SignInPageState extends State<SignInPage> {
             ),
             SizedBox(height: 32.0),
             TextField(
+              decoration: InputDecoration(
+                hintText: 'Name',
+              ),
+            ),
+            SizedBox(height: 16.0),
+            TextField(
+              obscureText: true,
               decoration: InputDecoration(
                 hintText: 'Email',
               ),
@@ -56,20 +62,15 @@ class _SignInPageState extends State<SignInPage> {
                 ),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SignUpPage()),
-                    );
-                  },
-              child: Text("Sign Up"),
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(
-                  Color.fromRGBO(212, 129, 102, 1),
-                ),
-              ),
-            ),
+            // ElevatedButton(
+            //   onPressed: () {},
+            //   child: Text("Sign Up"),
+            //   style: ButtonStyle(
+            //     backgroundColor: MaterialStateProperty.all<Color>(
+            //       Color.fromRGBO(212, 129, 102, 1),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
