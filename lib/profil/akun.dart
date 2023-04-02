@@ -1,17 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:unp_asset/Widgets/auth/auth_signIn.dart';
 import 'package:unp_asset/details/uploadFile.dart';
 import 'package:unp_asset/profil/signIn.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'package:unp_asset/profil/signUp.dart';
 
-class LoginPage extends StatelessWidget {
+String? finalToken;
+
+class LoginPage extends StatefulWidget {
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final SecureStorage secureStorage = SecureStorage();
+
+   void initState() {
+    secureStorage.readSecureData('token').then((value) {
+      finalToken = value;
+      setState(() {});
+    });
+    print(finalToken);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
+    debugPrint(finalToken);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromRGBO(212, 129, 102, 1),
-        title: Text('Login Page'),
+        title: Text('Profile'),
+        actions: [
+          finalToken != null
+              ? IconButton(
+                  icon: Icon(Icons.logout),
+                  onPressed: () {
+                    secureStorage.deleteSecureData('token');
+                    setState(() {});
+                    Navigator.of(context).pushReplacementNamed('/');
+                  },
+                )
+              : Container()
+        ],
       ),
-      body: Center(
+      body: finalToken == null ? Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -37,7 +70,7 @@ class LoginPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
+                 ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(
                       Color.fromRGBO(212, 129, 102, 1),
@@ -53,13 +86,18 @@ class LoginPage extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => SignInPage()),
                     );
                   },
-                ),
+                )
+                
               ],
             ),
             SizedBox(height: 250),
           ],
         ),
-      ),
+      )
+      : Center(
+        
+      )
+               
     );
   }
 }

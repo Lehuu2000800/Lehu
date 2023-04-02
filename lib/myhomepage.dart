@@ -1,10 +1,9 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:unp_asset/pages/animation.dart';
 import 'package:unp_asset/pages/audiopage.dart';
 import 'package:unp_asset/pages/homepage.dart';
 import 'package:unp_asset/pages/imagespage.dart';
-import 'package:unp_asset/details/videopage.dart';
+import 'package:unp_asset/pages/videopage.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -17,7 +16,6 @@ class _MyHomePageState extends State<MyHomePage> {
     ImageGallery(),
     VideoListPage(),
     AudioPlayerScreen(),
-    animations(),
   ];
 
   int _selectedIndex = 0;
@@ -35,6 +33,14 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.white,
         leading: Container(
           child: Image.asset('asset/images/logoasset.png'),
+        ),
+        title: Text(
+          'UNP ASSET',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 25,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -54,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: _pages[_selectedIndex],
+      body:  _pages[_selectedIndex],
       bottomNavigationBar: CurvedNavigationBar(
         backgroundColor: Colors.white,
         buttonBackgroundColor: Color.fromRGBO(212, 129, 102, 1),
@@ -65,7 +71,6 @@ class _MyHomePageState extends State<MyHomePage> {
           Icon(Icons.image, size: 30),
           Icon(Icons.video_camera_back, size: 30),
           Icon(Icons.audio_file_outlined, size: 30),
-          Icon(Icons.animation, size: 30),
         ],
         onTap: _onItemTapped,
         animationCurve: Curves.easeInOut,

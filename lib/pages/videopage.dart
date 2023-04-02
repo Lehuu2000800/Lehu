@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:unp_asset/details/VideoDetail.dart';
 import 'package:video_player/video_player.dart';
-import 'VideoDetail.dart';
+import '../details/VideoDetail.dart';
 
 class Video {
   final String title;

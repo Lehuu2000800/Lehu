@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'videopage.dart';
+import '../pages/videopage.dart';
 
 class FavoriteVideos {
   List<Video> videos = [];
