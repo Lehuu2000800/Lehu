@@ -41,6 +41,7 @@ class _AuthsingIn extends State<AuthsingIn> {
   var _userEmail = '';
   var _userPassword = '';
   final _emailcontroller = TextEditingController();
+  final _userNameController = TextEditingController();
   final _passwordcontroller = TextEditingController();
   final SecureStorage secureStorage = SecureStorage();
 
@@ -107,7 +108,6 @@ class _AuthsingIn extends State<AuthsingIn> {
         'password': password,
       },
     );
-    print(response.body);
     print('sukses');
   }
 
@@ -115,7 +115,7 @@ class _AuthsingIn extends State<AuthsingIn> {
     if (!widget.isLogin) {
       doLogin(_emailcontroller.text, _passwordcontroller.text);
     } else {
-      doSignup(_userName, _emailcontroller.text, _passwordcontroller.text);
+      doSignup(_userNameController.text, _emailcontroller.text, _passwordcontroller.text);
     }
   }
 
@@ -157,6 +157,7 @@ class _AuthsingIn extends State<AuthsingIn> {
                   }
                   return null;
                 },
+                controller: _userNameController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: 'UserName',
