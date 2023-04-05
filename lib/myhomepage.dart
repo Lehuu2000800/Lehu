@@ -13,9 +13,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<Widget> _pages = [
     homepage(),
-    ImageGallery(),
+    ImageListPage(),
     VideoListPage(),
-    AudioPlayerScreen(),
+    AudioListPage(),
   ];
 
   int _selectedIndex = 0;

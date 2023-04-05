@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:unp_asset/profil/akun.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+// import 'package:url_launcher/url_launcher.dart';
 
 class SecureStorage {
   final _storage = const FlutterSecureStorage();
@@ -29,61 +29,95 @@ class AuthsingIn extends StatefulWidget {
   AuthsingIn({super.key});
 
   bool isLogin = false;
-  
+
   @override
   State<AuthsingIn> createState() => _AuthsingIn();
 }
 
 class _AuthsingIn extends State<AuthsingIn> {
-final _formKey = GlobalKey<FormState>();
-var _isLogin =true;
-var _userName ='';
-var _userEmail ='';
-var _userPassword ='';
-final _emailcontroller = TextEditingController();
-final _passwordcontroller = TextEditingController();
-final SecureStorage secureStorage = SecureStorage();
+  final _formKey = GlobalKey<FormState>();
+  var _isLogin = true;
+  var _userName = '';
+  var _userEmail = '';
+  var _userPassword = '';
+  final _emailcontroller = TextEditingController();
+  final _passwordcontroller = TextEditingController();
+  final SecureStorage secureStorage = SecureStorage();
 
-
- doLogin(String email, String password) async {
+  doLogin(String email, String password) async {
     final url = Uri.parse('http://unpasset.testweb.skom.id/api/login');
 
-  try {
-    final response = await http.post(url, headers: {'Accept' : 'application/json', 'Content-Type' : 'application/json; charset=UTF-8 '}, body: jsonEncode({
-      'email' : email,
-      'password' : password,
-    }));
+    final response = await http.post(url,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8 '
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }));
 
     if (response.statusCode == 200) {
       print('sukses');
       secureStorage.writeSecureData('token', email);
-      print(email);
-      Navigator.of(context).pushReplacementNamed('/');
-      
-    } else {
-      print(response.statusCode);
-    
-    }
-  } catch (e) {
-    throw(e);
-  } 
- }
+      secureStorage.writeSecureData('token2', json.encode(response.body));
 
-void _trySubmit(){
-  if (!widget.isLogin){
-    doLogin(_emailcontroller.text, _passwordcontroller.text);
-  }else{
-    final url = Uri.parse('http://unpasset.testweb.skom.id/api/signup');
-    http.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({
-      'name': _userName,
-      'email': _emailcontroller.text,
-      'password': _passwordcontroller.text,
-    })).then((response) {
+      print('token: ${json.encode(response.body)}');
+
+      String? token;
+      String? filterToken;
+      await SecureStorage().readSecureData('token2').then((value) {
+        token = value;
+        filterToken = token!.replaceAll('"', '');
+      });
+      final url =
+          Uri.parse('http://unpasset.testweb.skom.id/api/user/data-user');
+      final responseLogin = await http.get(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': "Bearer $filterToken",
+        },
+      );
+      secureStorage.writeSecureData(
+          'name', json.decode(responseLogin.body)['name']);
+      secureStorage.writeSecureData(
+          'id', json.decode(responseLogin.body)['id'].toString());
+
+      print('email $email');
+      print('nama : ${json.decode(responseLogin.body)['name']}');
+
+      Navigator.of(context).pushReplacementNamed('/');
+    } else {
       print(response.body);
-      Navigator.of(context).pushReplacementNamed('/profile');
-    }).catchError((error) => print(error));
+    }
   }
-}
+
+  doSignup(String name, String email, String password) async {
+    final url = Uri.parse('https://unpasset.testweb.skom.id/api/signup');
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Accept': 'application/json',
+      },
+      body: {
+        'name': name,
+        'email': email,
+        'password': password,
+      },
+    );
+    print(response.body);
+    print('sukses');
+  }
+
+  void _trySubmit() {
+    if (!widget.isLogin) {
+      doLogin(_emailcontroller.text, _passwordcontroller.text);
+    } else {
+      doSignup(_userName, _emailcontroller.text, _passwordcontroller.text);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,63 +134,65 @@ void _trySubmit(){
             ),
             SizedBox(height: 16.0),
             Text(
-              !widget.isLogin ?'Lets Sign You In':'Lets Sign You Up',
+              !widget.isLogin ? 'Lets Sign You In' : 'Getting Started',
               style: TextStyle(
                 fontSize: 24.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
-              'Welcome Back To UNP ASSET',
+              !widget.isLogin
+                  ? 'Welcome Back To UNP ASSET'
+                  : 'Create an account to continue',
               style: TextStyle(
                 fontSize: 14.0,
               ),
             ),
             if (widget.isLogin)
-            TextFormField(
-              key: ValueKey('Username'),
-              validator: (value){
-                if (value!.isEmpty || value.length < 4){
-                  return 'Please enter at least 4 characters';
-                }
-                return null;
-              },
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: 'UserName',
+              TextFormField(
+                key: ValueKey('UserName'),
+                validator: (value) {
+                  if (value!.isEmpty || value.length < 4) {
+                    return 'Please enter at least 4 characters';
+                  }
+                  return null;
+                },
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'UserName',
+                ),
+                onSaved: (value) {
+                  _userName = value!;
+                },
               ),
-              onSaved: (value){
-              _userEmail = value!;
-            },
-            ),
             TextFormField(
               key: ValueKey('email'),
               controller: _emailcontroller,
-              validator: (value){
-                if (value!.isEmpty || !value.contains('@')){
+              validator: (value) {
+                if (value!.isEmpty || !value.contains('@')) {
                   return 'Please enter a valid email address';
                 }
                 return null;
               },
               decoration: InputDecoration(labelText: 'Email address'),
-              onSaved: (value){
-              _userName = value!;
-            },
+              onSaved: (value) {
+                _userEmail = value!;
+              },
             ),
             TextFormField(
               key: ValueKey('password'),
               controller: _passwordcontroller,
-              validator: (value){
-                if (value!.isEmpty || value.length < 8){
+              validator: (value) {
+                if (value!.isEmpty || value.length < 8) {
                   return 'Password must be at least 8 characters long';
                 }
                 return null;
               },
               decoration: InputDecoration(labelText: 'Password'),
               obscureText: true,
-              onSaved: (value){
-              _userPassword = value!;
-            },
+              onSaved: (value) {
+                _userPassword = value!.toString();
+              },
             ),
             SizedBox(height: 32.0),
             ElevatedButton(
@@ -169,12 +205,14 @@ void _trySubmit(){
               ),
             ),
             OutlinedButton(
-              child: Text(!widget.isLogin ? 'Create new account':'I already have an account'),
+              child: Text(!widget.isLogin
+                  ? 'Create new account'
+                  : 'I already have an account'),
               onPressed: () {
                 setState(() {
-                   widget.isLogin = !widget.isLogin;
+                  widget.isLogin = !widget.isLogin;
                 });
-              // launchUrl(Uri.parse('http://192.168.137.1:3000/signup'));
+                // launchUrl(Uri.parse('http://unpasset.testweb.skom.id/signup'));
               },
               style: ButtonStyle(
                 foregroundColor: MaterialStateProperty.all(

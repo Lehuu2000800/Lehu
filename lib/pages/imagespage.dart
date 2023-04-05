@@ -1,234 +1,166 @@
-import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:path_provider/path_provider.dart';
+import '../details/imagedetail.dart';
 
-class ImageGallery extends StatefulWidget {
+class ImageListPage extends StatefulWidget {
+   String _searchText = '';
   @override
-  _ImageGalleryState createState() => _ImageGalleryState();
+  _ImageListPageState createState() => _ImageListPageState();
 }
 
-class _ImageGalleryState extends State<ImageGallery> {
-  List<String> imageUrls = [
-    "https://picsum.photos/id/237/200/300",
-    "https://picsum.photos/id/238/200/300",
-    "https://picsum.photos/id/239/200/300",
-    "https://picsum.photos/id/240/200/300",
-    "https://picsum.photos/id/241/200/300",
-    "https://picsum.photos/id/242/200/300",
-  ];
+class _ImageListPageState extends State<ImageListPage> {
+  
+  List<dynamic> images = [];
 
-  List<String> favoriteImages = [];
-  String query = '';
-
-  Future<void> downloadImage(String url) async {
-    try {
-      var response = await http.get(Uri.parse(url));
-      final result = await ImageGallerySaver.saveImage(
-          Uint8List.fromList(response.bodyBytes),
-          quality: 60,
-          name: 'img_${DateTime.now().millisecondsSinceEpoch}');
-      print('Image saved: $result');
-    } catch (e) {
-      print('Error saving image: $e');
-    }
+  @override
+  void initState() {
+    super.initState();
+    fetchImages();
   }
 
-  void toggleFavorite(String url) {
-    setState(() {
-      if (favoriteImages.contains(url)) {
-        favoriteImages.remove(url);
-      } else {
-        favoriteImages.add(url);
-      }
-    });
-  }
+  Future<void> fetchImages() async {
+    final response = await http
+        .get(Uri.parse('https://unpasset.testweb.skom.id/api/user/index'));
 
-  List<String> get filteredUrls {
-    if (query.isEmpty) {
-      return imageUrls;
+    if (response.statusCode == 200) {
+      setState(() {
+        images = jsonDecode(response.body)['data']
+            .where((item) =>
+                item['category_id'] == '3' && item['file'].contains('.jpg'))
+            .toList();
+      });
+    } else {
+      throw Exception('Failed to load images');
     }
-    return imageUrls
-        .where((url) => url.toLowerCase().contains(query.toLowerCase()))
-        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Image Gallery'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () async {
-              final result = await showSearch(
-                  context: context, delegate: ImageSearchDelegate(imageUrls));
-              setState(() {
-                query = result!;
-              });
-            },
-          ),
-        ],
-      ),
       body: GridView.builder(
-        padding: EdgeInsets.all(8.0),
-        itemCount: filteredUrls.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8.0,
-          mainAxisSpacing: 8.0,
-        ),
-        itemBuilder: (BuildContext context, int index) {
-          final url = filteredUrls[index];
+        gridDelegate:
+            SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+        itemCount: images.length,
+        itemBuilder: (context, index) {
+          final image = images[index];
           return GestureDetector(
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DetailImage(
-                    imageUrl: url,
-                    onDownload: () {
-                      downloadImage(url);
-                    },
-                    onToggleFavorite: () {
-                      toggleFavorite(url);
-                    },
-                    isFavorite: favoriteImages.contains(url),
-                  ),
+                  builder: (context) => DetailImage(image: image),
                 ),
               );
             },
-            child: Image.network(url),
+            child: Card(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Image.network(
+                      'http://unpasset.testweb.skom.id/storage/uploads/photo/' +
+                          image['file'],
+                      fit: BoxFit.fitWidth,
+                      loadingBuilder: (BuildContext context, Widget child,
+                          ImageChunkEvent? loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 8.0),
+                  Text(image['name']),
+                  SizedBox(height: 4.0),
+                  Text(image['body']),
+                ],
+              ),
+            ),
           );
         },
       ),
     );
   }
 }
-
-class ImageSearchDelegate extends SearchDelegate<String> {
-  final List<String> imageUrls;
-
-  ImageSearchDelegate(this.imageUrls);
-
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: Icon(Icons.clear),
-        onPressed: () {
-         
-          query = '';
-          showSuggestions(context);
-        },
-      ),
-    ];
-  }
-
-  @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, '');
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    final filteredUrls = imageUrls
-        .where((url) => url.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-    return GridView.builder(
-      padding: EdgeInsets.all(8.0),
-      itemCount: filteredUrls.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 8.0,
-        mainAxisSpacing: 8.0,
-      ),
-      itemBuilder: (BuildContext context, int index) {
-        final url = filteredUrls[index];
-        return GestureDetector(
-          onTap: () {
-            close(context, url);
-          },
-          child: Image.network(url),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final filteredUrls = query.isEmpty
-        ? []
-        : imageUrls
-            .where((url) => url.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-    return GridView.builder(
-      padding: EdgeInsets.all(8.0),
-      itemCount: filteredUrls.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 8.0,
-        mainAxisSpacing: 8.0,
-      ),
-      itemBuilder: (BuildContext context, int index) {
-        final url = filteredUrls[index];
-        return GestureDetector(
-          onTap: () {
-            query = url;
-            showResults(context);
-          },
-          child: Image.network(url),
-        );
-      },
-    );
-  }
-}
-
+ 
 class DetailImage extends StatelessWidget {
-  final String imageUrl;
-  final Function() onDownload;
-  final Function() onToggleFavorite;
-  final bool isFavorite;
+  
+  final dynamic image;
 
-  const DetailImage({
-    required this.imageUrl,
-    required this.onDownload,
-    required this.onToggleFavorite,
-    required this.isFavorite,
-  });
+  const DetailImage({required this.image});
+
+  Future<void> _downloadFile(String url) async {
+    try {
+      var request = await HttpClient().getUrl(Uri.parse(url));
+      var response = await request.close();
+      Uint8List bytes = await consolidateHttpClientResponseBytes(response);
+      await File(image['name']).writeAsBytes(bytes);
+    } catch (error) {
+      print(error);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Image Detail'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.favorite),
-            color: isFavorite ? Colors.red : null,
-            onPressed: () {
-              onToggleFavorite();
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.file_download),
-            onPressed: () {
-              onDownload();
-            },
-          ),
-        ],
+        title: Text(image['name']),
+        backgroundColor: Color.fromRGBO(212, 129, 102, 1),
       ),
-      body: Center(
-        child: Image.network(imageUrl),
+      body: Column(
+        children: [
+           
+          Expanded(
+            child: Image.network(
+              'http://unpasset.testweb.skom.id/storage/uploads/photo/' +
+                  image['file'],
+              fit: BoxFit.contain,
+              loadingBuilder: (BuildContext context, Widget child,
+                  ImageChunkEvent? loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(height: 50.0),
+          ElevatedButton(
+             style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            Color.fromRGBO(212, 129, 102, 1),
+                          ),
+                        ),
+            onPressed: () {
+              _downloadFile(
+                'http://unpasset.testweb.skom.id/storage/uploads/photo/' +
+                    image['file'],
+              );
+            },
+            child: Text('Free Download'),
+          ),
+          SizedBox(height: 0.0),
+          Text(image['body']),
+          SizedBox(height: 250.0),
+        ],
       ),
     );
   }
 }
+

@@ -1,14 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:unp_asset/details/VideoDetail.dart';
+import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
-import '../details/VideoDetail.dart';
-
-class Video {
-  final String title;
-  final String url;
-
-  Video({required this.title, required this.url});
-}
 
 class VideoListPage extends StatefulWidget {
   @override
@@ -16,144 +9,153 @@ class VideoListPage extends StatefulWidget {
 }
 
 class _VideoListPageState extends State<VideoListPage> {
-  late List<Video> allVideos;
-  late List<Video> filteredVideos;
-  late List<Video> favorites;
-  late TextEditingController searchController;
+  List<dynamic> videos = [];
 
   @override
   void initState() {
     super.initState();
-
-    allVideos = [
-      Video(
-        title: 'Big Buck Bunny',
-        url:
-            'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4',
-      ),
-      Video(
-        title: 'Sintel',
-        url: 'https://sample-videos.com/video123/mp4/720/sintel_720p_1mb.mp4',
-      ),
-      Video(
-        title: 'Tears of Steel',
-        url:
-            'https://sample-videos.com/video123/mp4/720/tears_of_steel_720p_1mb.mp4',
-      ),
-      Video(
-        title: 'Elephant Dream',
-        url:
-            'https://sample-videos.com/video123/mp4/720/elephants_dream_720p_1mb.mp4',
-      ),
-    ];
-
-    filteredVideos = allVideos;
-    favorites = [];
-    searchController = TextEditingController();
+    fetchVideos();
   }
 
-  void _filterVideos(String query) {
-    setState(() {
-      filteredVideos = allVideos.where((video) {
-        final title = video.title.toLowerCase();
-        final lowerQuery = query.toLowerCase();
+  Future<void> fetchVideos() async {
+    final response = await http
+        .get(Uri.parse('http://unpasset.testweb.skom.id/api/user/index'));
 
-        return title.contains(lowerQuery);
-      }).toList();
-    });
+    if (response.statusCode == 200) {
+      setState(() {
+        videos = jsonDecode(response.body)['data']
+            .where((item) =>
+                item['category_id'] == '4' && item['file'].contains('.mp4'))
+            .toList();
+      });
+    } else {
+      throw Exception('Failed to load videos');
+    }
   }
 
-  void _toggleFavorite(Video video) {
-    setState(() {
-      if (favorites.contains(video)) {
-        favorites.remove(video);
-      } else {
-        favorites.add(video);
-      }
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: GridView.builder(
+        gridDelegate:
+            SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+        itemCount: videos.length,
+        itemBuilder: (context, index) {
+          final video = videos[index];
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerScreen(video: video),
+                ),
+              );
+            },
+            child: Card(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                        AspectRatio(
+                          aspectRatio: 16 / 9,
+                          child: VideoPlayer(
+                            VideoPlayerController.network(
+                              'http://unpasset.testweb.skom.id/storage/uploads/video/' +
+                                  video['file'],
+                            )..initialize().then((_) {
+                                // Ensure the first frame is shown after the video is initialized
+                                setState(() {});
+                              }),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8.0),
+                  Text(video['name']),
+                  SizedBox(height: 4.0),
+                  Text(video['body']),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class VideoPlayerScreen extends StatefulWidget {
+  final dynamic video;
+
+  VideoPlayerScreen({required this.video});
+
+  @override
+  _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.network(
+      'http://unpasset.testweb.skom.id/storage/uploads/video/' +
+          widget.video['file'],
+    )..initialize().then((_) {
+        // Ensure the first frame is shown after the video is initialized
+        setState(() {});
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Video Player Demo'),
+        title: Text(widget.video['name']),
+        backgroundColor: Color.fromRGBO(212, 129, 102, 1),
       ),
-      body: Column(
+      body: Stack(
+        alignment: Alignment.bottomCenter,
         children: [
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                labelText: 'Search Videos',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: _filterVideos,
-            ),
+          AspectRatio(
+            aspectRatio: _controller.value.aspectRatio,
+            child: VideoPlayer(_controller),
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: filteredVideos.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Card(
-                    child: InkWell(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              VideoDetailPage(video: filteredVideos[index]),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Stack(
-                            children: [
-                              AspectRatio(
-                                aspectRatio: 16 / 9,
-                                child: VideoPlayer(
-                                  VideoPlayerController.network(
-                                    filteredVideos[index].url,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 8.0,
-                                right: 8.0,
-                                child: IconButton(
-                                  icon:
-                                      favorites.contains(filteredVideos[index])
-                                          ? Icon(Icons.favorite)
-                                          : Icon(Icons.favorite_border),
-                                  color: Colors.red,
-                                  onPressed: () =>
-                                      _toggleFavorite(filteredVideos[index]),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 8.0,
-                                left: 8.0,
-                                child: Text(
-                                  filteredVideos[index].title,
-                                  style: TextStyle(
-                                    fontSize: 16.0,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+          VideoProgressIndicator(
+            _controller,
+            allowScrubbing: true,
+            padding: EdgeInsets.all(8.0),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: Icon(
+                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (_controller.value.isPlaying) {
+                      _controller.pause();
+                    } else {
+                      _controller.play();
+                    }
+                  });
+                },
+              ),
+            ],
           ),
         ],
       ),

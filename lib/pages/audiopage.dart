@@ -1,70 +1,121 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
 
-void main() => runApp(MyApp());
+class AudioListPage extends StatefulWidget {
+  @override
+  _AudioListPageState createState() => _AudioListPageState();
+}
 
-class MyApp extends StatelessWidget {
+class _AudioListPageState extends State<AudioListPage> {
+  List<dynamic> audios = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAudios();
+  }
+
+  Future<void> fetchAudios() async {
+    final response = await http
+        .get(Uri.parse('https://unpasset.testweb.skom.id/api/user/index'));
+
+    if (response.statusCode == 200) {
+      setState(() {
+        audios = jsonDecode(response.body)['data']
+            .where((item) =>
+                item['category_id'] == '5' && item['file'].contains('.mp3'))
+            .toList();
+      });
+    } else {
+      throw Exception('Failed to load audios');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Audio Player Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: AudioPlayerScreen(),
+    return Scaffold(
+      // appBar: AppBar(
+      //   title: Text('Audio List'),
+      // ),
+      body: ListView.builder(
+        itemCount: audios.length,
+        itemBuilder: (context, index) {
+          final audio = audios[index];
+          return ListTile(
+            title: Text(audio['name']),
+            subtitle: Text(audio['body']),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AudioPlayerScreen(audio: audio),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
 
 class AudioPlayerScreen extends StatefulWidget {
+  final dynamic audio;
+
+  AudioPlayerScreen({required this.audio});
+
   @override
   _AudioPlayerScreenState createState() => _AudioPlayerScreenState();
 }
 
 class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
-  AudioPlayer _audioPlayer = AudioPlayer();
+  late AudioPlayer _player;
   bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    _audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
-      if (state == PlayerState.playing) {
-        setState(() {
-          _isPlaying = true;
-        });
-      } else {
-        setState(() {
-          _isPlaying = false;
-        });
-      }
-    });
-  }
-
-  void _playAudio() async {
-    await _audioPlayer.play('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' as Source);
-  }
-
-  void _pauseAudio() async {
-    await _audioPlayer.pause();
+    _player = AudioPlayer();
   }
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    _player.dispose();
     super.dispose();
+  }
+
+  Future<void> _playAudio() async {
+    await _player.play(('http://unpasset.testweb.skom.id/storage/uploads/audio/' +
+            widget.audio['file']) as Source);
+    setState(() {
+      _isPlaying = true;
+    });
+  }
+
+  Future<void> _pauseAudio() async {
+    await _player.pause();
+    setState(() {
+      _isPlaying = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Audio Player'),
+        title: Text(widget.audio['name']),
+        backgroundColor: Color.fromRGBO(212, 129, 102, 1),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
+          children: [
             IconButton(
-              icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+              icon: Icon(
+                _isPlaying ? Icons.pause : Icons.play_arrow,
+              ),
               onPressed: () {
                 if (_isPlaying) {
                   _pauseAudio();
@@ -74,7 +125,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
               },
             ),
             SizedBox(height: 16.0),
-            Text(_isPlaying ? 'Playing' : 'Paused'),
+            Text(widget.audio['body']),
           ],
         ),
       ),
