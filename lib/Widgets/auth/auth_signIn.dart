@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:unp_asset/profil/akun.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 // import 'package:url_launcher/url_launcher.dart';
 
 class SecureStorage {
@@ -46,7 +47,7 @@ class _AuthsingIn extends State<AuthsingIn> {
   final SecureStorage secureStorage = SecureStorage();
 
   doLogin(String email, String password) async {
-    final url = Uri.parse('http://unpasset.testweb.skom.id/api/login');
+    final url = Uri.parse('https://unpasset.testweb.skom.id/api/login');
 
     final response = await http.post(url,
         headers: {
@@ -72,7 +73,7 @@ class _AuthsingIn extends State<AuthsingIn> {
         filterToken = token!.replaceAll('"', '');
       });
       final url =
-          Uri.parse('http://unpasset.testweb.skom.id/api/user/data-user');
+          Uri.parse('https://unpasset.testweb.skom.id/api/user/data-user');
       final responseLogin = await http.get(
         url,
         headers: <String, String>{
@@ -87,11 +88,13 @@ class _AuthsingIn extends State<AuthsingIn> {
           'id', json.decode(responseLogin.body)['id'].toString());
 
       print('email $email');
-      print('nama : ${json.decode(responseLogin.body)['name']}');
+      print('name : ${json.decode(responseLogin.body)['name']}');
 
       Navigator.of(context).pushReplacementNamed('/');
     } else {
       print(response.body);
+      Alert(context: context, title: "Warning", desc:"Login Tidak Berhasil")
+      .show();
     }
   }
 
@@ -109,13 +112,26 @@ class _AuthsingIn extends State<AuthsingIn> {
       },
     );
     print('sukses');
+    Alert(context: context, title: "Warning", desc:"Sign Up Berhasil",
+    buttons: [
+        DialogButton(
+          child: Text(
+            "OK",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () => Navigator.pop(context),
+          width: 120,
+        )
+      ],
+    ).show();
   }
 
   void _trySubmit() {
     if (!widget.isLogin) {
       doLogin(_emailcontroller.text, _passwordcontroller.text);
     } else {
-      doSignup(_userNameController.text, _emailcontroller.text, _passwordcontroller.text);
+      doSignup(_userNameController.text, _emailcontroller.text,
+          _passwordcontroller.text);
     }
   }
 

@@ -11,6 +11,7 @@ class _homepageState extends State<homepage> {
   @override
   Widget build(BuildContext context) {
     return Container(
+
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
@@ -25,7 +26,8 @@ class _homepageState extends State<homepage> {
             SizedBox(height: 150.0),
             Text(
               'Temukan Hal yang Menarik di sekitar Universitas Negeri Padang',
-              style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center, 
+              style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
             SizedBox(height: 50.0),
             TextField(

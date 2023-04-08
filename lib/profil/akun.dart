@@ -42,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => UploadPage()),
+                      MaterialPageRoute(builder: (context) => UploadForm()),
                     );
                   },
                 )
