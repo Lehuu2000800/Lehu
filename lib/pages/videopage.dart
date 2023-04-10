@@ -1,7 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:chewie/chewie.dart';
+import 'package:unp_asset/details/detailImage.dart';
 import 'package:video_player/video_player.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class VideoListPage extends StatefulWidget {
   @override
@@ -9,156 +11,135 @@ class VideoListPage extends StatefulWidget {
 }
 
 class _VideoListPageState extends State<VideoListPage> {
-  List<dynamic> videos = [];
+  List data = [];
+  late ChewieController _chewieController;
+  late VideoPlayerController _videoPlayerController;
+  final searchController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    fetchVideos();
-  }
-
-  Future<void> fetchVideos() async {
-    final response = await http
-        .get(Uri.parse('http://unpasset.testweb.skom.id/api/user/index'));
-
+  Future fetchData() async {
+    // fetch data from API
+    // replace the API_URL with your own API URL
+    final response =
+        await http.get(Uri.parse('https://unpasset.testweb.skom.id/api/user/index'));
     if (response.statusCode == 200) {
       setState(() {
-        videos = jsonDecode(response.body)['data']
-            .where((item) =>
-                item['category_id'] == '4' && item['file'].contains('.mp4'))
-            .toList();
+        data = json.decode(response.body)['data'];
       });
     } else {
-      throw Exception('Failed to load videos');
+      throw Exception('Failed to fetch data');
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: GridView.builder(
-        gridDelegate:
-            SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
-        itemCount: videos.length,
-        itemBuilder: (context, index) {
-          final video = videos[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VideoPlayerScreen(video: video),
-                ),
-              );
-            },
-            child: Card(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        AspectRatio(
-                          aspectRatio: 16 / 9,
-                          child: VideoPlayer(
-                            VideoPlayerController.network(
-                              'http://unpasset.testweb.skom.id/storage/uploads/video/' +
-                                  video['file'],
-                            )..initialize().then((_) {
-                                // Ensure the first frame is shown after the video is initialized
-                                setState(() {});
-                              }),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 8.0),
-                  Text(video['name']),
-                  SizedBox(height: 4.0),
-                  Text(video['body']),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
+  void searchData(String query) {
+    // search data based on query
+    setState(() {
+      data = data
+          .where((item) =>
+              item['name'].toLowerCase().contains(query.toLowerCase()) ||
+              item['body'].toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
   }
-}
-
-class VideoPlayerScreen extends StatefulWidget {
-  final dynamic video;
-
-  VideoPlayerScreen({required this.video});
-
-  @override
-  _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
-}
-
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  late VideoPlayerController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(
-      'http://unpasset.testweb.skom.id/storage/uploads/video/' +
-          widget.video['file'],
-    )..initialize().then((_) {
-        // Ensure the first frame is shown after the video is initialized
-        setState(() {});
-      });
+    fetchData();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
     super.dispose();
+    _videoPlayerController.dispose();
+    _chewieController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.video['name']),
-        backgroundColor: Color.fromRGBO(212, 129, 102, 1),
-      ),
-      body: Stack(
-        alignment: Alignment.bottomCenter,
+      body: Column(
         children: [
-          AspectRatio(
-            aspectRatio: _controller.value.aspectRatio,
-            child: VideoPlayer(_controller),
-          ),
-          VideoProgressIndicator(
-            _controller,
-            allowScrubbing: true,
-            padding: EdgeInsets.all(8.0),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: Icon(
-                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                ),
-                onPressed: () {
-                  setState(() {
-                    if (_controller.value.isPlaying) {
-                      _controller.pause();
-                    } else {
-                      _controller.play();
-                    }
-                  });
-                },
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('asset/images/background.jpg'),
+                fit: BoxFit.cover,
               ),
-            ],
+            ),
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200]?.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search',
+                          border: InputBorder.none,
+                        ),
+                        onSubmitted: (query) {
+                          searchData(query);
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.search_sharp),
+                      onPressed: () {
+                        searchData(searchController.text);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),Expanded(
+          child: ListView.builder(
+            itemCount: data.length,
+            itemBuilder: (BuildContext context, int index) {
+              if (data[index]['file'].toString().endsWith('.mp4')) {
+                // display video
+                _videoPlayerController = VideoPlayerController.network(
+                  'https://unpasset.testweb.skom.id/storage/uploads/video/${data[index]['file']}',
+                );
+                _chewieController = ChewieController(
+                  videoPlayerController: _videoPlayerController,
+                  autoPlay: false,
+                  looping: false,
+                  errorBuilder: (context, errorMessage) {
+                    return Center(
+                      child: Text(errorMessage),
+                    );
+                  },
+                );
+                return Padding(
+                  padding: EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Chewie(
+                        controller: _chewieController,
+                      ),
+                      SizedBox(height: 10),
+                      Text(data[index]['name'],
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      Text(data[index]['body']),
+                    ],
+                  ),
+                );
+              } else {
+                return Container();
+              }
+            },
           ),
-        ],
-      ),
+        )
+    ],
+    ),
     );
   }
 }

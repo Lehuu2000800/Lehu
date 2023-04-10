@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AudioListPage extends StatefulWidget {
   @override
@@ -9,125 +9,129 @@ class AudioListPage extends StatefulWidget {
 }
 
 class _AudioListPageState extends State<AudioListPage> {
-  List<dynamic> audios = [];
+  List data = [];
+  AudioPlayer _audioPlayer = AudioPlayer();
+  final searchController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    fetchAudios();
-  }
-
-  Future<void> fetchAudios() async {
+  Future fetchData() async {
+    // fetch data from API
+    // replace the API_URL with your own API URL
     final response = await http
         .get(Uri.parse('https://unpasset.testweb.skom.id/api/user/index'));
-
     if (response.statusCode == 200) {
       setState(() {
-        audios = jsonDecode(response.body)['data']
-            .where((item) =>
-                item['category_id'] == '5' && item['file'].contains('.mp3'))
-            .toList();
+        data = json.decode(response.body)['data'];
       });
     } else {
-      throw Exception('Failed to load audios');
+      throw Exception('Failed to fetch data');
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // appBar: AppBar(
-      //   title: Text('Audio List'),
-      // ),
-      body: ListView.builder(
-        itemCount: audios.length,
-        itemBuilder: (context, index) {
-          final audio = audios[index];
-          return ListTile(
-            title: Text(audio['name']),
-            subtitle: Text(audio['body']),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AudioPlayerScreen(audio: audio),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
+  void searchData(String query) {
+    // search data based on query
+    setState(() {
+      data = data
+          .where((item) =>
+              item['name'].toLowerCase().contains(query.toLowerCase()) ||
+              item['body'].toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
   }
-}
-
-class AudioPlayerScreen extends StatefulWidget {
-  final dynamic audio;
-
-  AudioPlayerScreen({required this.audio});
-
-  @override
-  _AudioPlayerScreenState createState() => _AudioPlayerScreenState();
-}
-
-class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
-  late AudioPlayer _player;
-  bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer();
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  Future<void> _playAudio() async {
-    await _player.play(('http://unpasset.testweb.skom.id/storage/uploads/audio/' +
-            widget.audio['file']) as Source);
-    setState(() {
-      _isPlaying = true;
-    });
-  }
-
-  Future<void> _pauseAudio() async {
-    await _player.pause();
-    setState(() {
-      _isPlaying = false;
-    });
+    fetchData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.audio['name']),
-        backgroundColor: Color.fromRGBO(212, 129, 102, 1),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              icon: Icon(
-                _isPlaying ? Icons.pause : Icons.play_arrow,
+      body: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('asset/images/background.jpg'),
+                fit: BoxFit.cover,
               ),
-              onPressed: () {
-                if (_isPlaying) {
-                  _pauseAudio();
+            ),
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200]?.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search',
+                          border: InputBorder.none,
+                        ),
+                        onSubmitted: (query) {
+                          searchData(query);
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.search_sharp),
+                      onPressed: () {
+                        searchData(searchController.text);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: data.length,
+              itemBuilder: (BuildContext context, int index) {
+                if (data[index]['file'].toString().endsWith('.mp3')) {
+                  // display audio
+                  return Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: ListTile(
+                      leading: Icon(Icons.music_note),
+                      title: Text(data[index]['name']),
+                      subtitle: Text(data[index]['body']),
+                      trailing: IconButton(
+                        icon: Icon(_audioPlayer.state == PlayerState.playing
+                            ? Icons.pause
+                            : Icons.play_arrow),
+                        onPressed: () {
+                          if (_audioPlayer.state == PlayerState.playing) {
+                            _audioPlayer.pause();
+                          } else if (_audioPlayer.state == PlayerState.paused ||
+                              _audioPlayer.state == PlayerState.stopped) {
+                            _audioPlayer.play(UrlSource(
+                                'https://unpasset.testweb.skom.id/storage/uploads/audio/${data[index]['file']}'));
+                          }
+                        },
+                      ),
+                      onTap: () {
+                        if (_audioPlayer.state == PlayerState.playing) {
+                          _audioPlayer.pause();
+                        } else if (_audioPlayer.state == PlayerState.paused ||
+                            _audioPlayer.state == PlayerState.stopped) {
+                          _audioPlayer.play(UrlSource(
+                              'https://unpasset.testweb.skom.id/storage/uploads/audio/${data[index]['file']}'));
+                        }
+                      },
+                    ),
+                  );
                 } else {
-                  _playAudio();
+                  return Container(); // return empty container for other file types
                 }
               },
             ),
-            SizedBox(height: 16.0),
-            Text(widget.audio['body']),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

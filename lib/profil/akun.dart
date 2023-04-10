@@ -3,10 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:unp_asset/Widgets/auth/auth_signIn.dart';
 import 'package:unp_asset/Widgets/auth/update_profile.dart';
-import 'package:unp_asset/details/uploadFile.dart';
 import 'package:unp_asset/profil/signIn.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+
+import '../pages/tab.dart';
 
 String? finalToken;
 
@@ -42,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => UploadForm()),
+                      MaterialPageRoute(builder: (context) => tabPage()),
                     );
                   },
                 )

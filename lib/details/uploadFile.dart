@@ -1,66 +1,87 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:http/http.dart' as http;
 
-class UploadForm extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
+
+class UploadDataScreen extends StatefulWidget {
+  const UploadDataScreen({Key? key}) : super(key: key);
+
   @override
-  _UploadFormState createState() => _UploadFormState();
+  _UploadDataScreenState createState() => _UploadDataScreenState();
 }
 
-class _UploadFormState extends State<UploadForm> {
-  String? _filePath;
-  FileType _fileType = FileType.any;
+class _UploadDataScreenState extends State<UploadDataScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _title;
-  String? _category;
-  String? _description;
-  List<String> _categories = ['Image', 'Video', 'Audio'];
+  final _titleController = TextEditingController();
+  final _bodyController = TextEditingController();
+  final _categoryController = TextEditingController();
+  File? _file;
 
-  Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: _fileType,
-    );
-
-    if (result != null) {
-      setState(() {
-        _filePath = result.files.single.path;
-      });
-    }
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    _categoryController.dispose();
+    super.dispose();
   }
 
   Future<void> _uploadData() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('http://unpasset.testweb.skom.id/api/user/store'),
-      );
+      final url = Uri.parse("https://unpasset.testweb.skom.id/api/user/store");
+      try {
+        final bytes = await _file!.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        if (base64Image == null || base64Image.isEmpty) {
+          // Handling jika encoding base64 gagal
+          throw Exception("Failed to encode file to base64");
+        }
 
-      request.fields['title'] = _title!;
-      request.fields['category'] = _category!;
-      request.fields['description'] = _description!;
+        final response = await http.post(
+          url,
+          headers: <String, String>{
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization':
+                "Bearer 149|idBJ8hTJbaQ0WY5cz1bRWxtsAEOUhvtEstae4KE1",
+          },
+          body: json.encode({
+            'title': _titleController.text,
+            'file': base64Image,
+            'body': _bodyController.text,
+            'category_id': _categoryController.text,
+          }),
+        );
 
-      if (_filePath != null) {
-        File file = File(_filePath!);
-        String fileName = file.path.split('/').last;
-        request.files.add(await http.MultipartFile.fromPath(
-          'file',
-          _filePath!,
-          filename: fileName,
-        ));
-      }
-
-      var response = await request.send();
-
-      if (response.statusCode == 200) {
-        // Upload success
-        print('Upload success');
-      } else {
-        // Upload failed
-        print('Upload failed');
+        if (response.statusCode == 200) {
+          // Upload data berhasil
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Data berhasil diupload"),
+            duration: Duration(seconds: 2),
+          ));
+        } else {
+          // Upload data gagal
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text("Upload Gagal"),
+              content: Text(
+                  "Terjadi kesalahan saat mengupload data. Silakan coba lagi."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("OK"),
+                ),
+              ],
+            ),
+          );
+        }
+      } catch (e) {
+        // Tambahkan code untuk menangani kesalahan yang terjadi saat upload data
+        print(e.toString());
       }
     }
   }
@@ -69,97 +90,82 @@ class _UploadFormState extends State<UploadForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-         backgroundColor: Color.fromRGBO(212, 129, 102, 1),
-        title: Text('Upload Form'),
+        title: Text("Upload Data"),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_filePath != null) ...[
-                  Text('Selected file: $_filePath'),
-                  SizedBox(height: 20.0),
-                ],
-                ElevatedButton(
-                   style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                            Color.fromRGBO(212, 129, 102, 1),
-                          ),
-                        ),
-                  onPressed: () {
-                    _pickFile();
-                  },
-                  child: Text('Choose File'),
-                ),
-                SizedBox(height: 20.0),
-                DropdownButton<String>(
-                  value: _category,
-                  onChanged: (value) {
-                    setState(() {
-                      _category = value!;
-                    });
-                  },
-                  hint: Text('Category'),
-                  items: _categories.map((value) {
-                    return DropdownMenuItem(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 20.0),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Title',
-                    border: OutlineInputBorder(),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: InputDecoration(labelText: "Title"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Title cannot be empty";
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16.0),
+              TextFormField(
+                controller: _categoryController,
+                decoration: InputDecoration(labelText: "Category ID"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Category ID cannot be empty";
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16.0),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final file = await _pickFile();
+                      setState(() {
+                        _file = file;
+                      });
+                    },
+                    child: Text("Select File"),
                   ),
+                ),
+              ),
+              if (_file != null) Text(_file!.path),
+              SizedBox(height: 16.0),
+              Expanded(
+                child: TextFormField(
+                  controller: _bodyController,
+                  decoration: InputDecoration(labelText: "Body"),
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a title';
+                      return "Body cannot be empty";
                     }
                     return null;
                   },
-                  onSaved: (value) {
-                    _title = value;
-                  },
                 ),
-                SizedBox(height: 20.0),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a description';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) {
-                    _description = value;
-                  },
-                ),
-                SizedBox(height: 20.0),
-                ElevatedButton(
-                   style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                            Color.fromRGBO(212, 129, 102, 1),
-                          ),
-                        ),
-                  onPressed: () {
-                    _uploadData();
-                  },
-                  child: Text('Upload'),
-                ),
-              ],
-            ),
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: _uploadData,
+                child: Text("Upload Data"),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Future<File?> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result == null) return null;
+    return File(result.files.single.path!);
   }
 }
