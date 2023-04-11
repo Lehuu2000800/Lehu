@@ -47,7 +47,7 @@ class _AuthsingIn extends State<AuthsingIn> {
   final SecureStorage secureStorage = SecureStorage();
 
   doLogin(String email, String password) async {
-    final url = Uri.parse('https://unpasset.testweb.skom.id/api/login');
+    final url = Uri.parse('http://192.168.202.40:3000/api/login');
 
     final response = await http.post(url,
         headers: {
@@ -73,7 +73,7 @@ class _AuthsingIn extends State<AuthsingIn> {
         filterToken = token!.replaceAll('"', '');
       });
       final url =
-          Uri.parse('https://unpasset.testweb.skom.id/api/user/data-user');
+          Uri.parse('http://192.168.202.40:3000/api/user/data-user');
       final responseLogin = await http.get(
         url,
         headers: <String, String>{
@@ -99,7 +99,7 @@ class _AuthsingIn extends State<AuthsingIn> {
   }
 
   doSignup(String name, String email, String password) async {
-    final url = Uri.parse('https://unpasset.testweb.skom.id/api/signup');
+    final url = Uri.parse('http://192.168.202.40:3000/api/signup');
     final response = await http.post(
       url,
       headers: <String, String>{

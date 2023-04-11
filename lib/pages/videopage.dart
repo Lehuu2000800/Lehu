@@ -20,7 +20,7 @@ class _VideoListPageState extends State<VideoListPage> {
     // fetch data from API
     // replace the API_URL with your own API URL
     final response =
-        await http.get(Uri.parse('https://unpasset.testweb.skom.id/api/user/index'));
+        await http.get(Uri.parse('http://192.168.202.40:3000/api/user/index'));
     if (response.statusCode == 200) {
       setState(() {
         data = json.decode(response.body)['data'];
@@ -104,7 +104,7 @@ class _VideoListPageState extends State<VideoListPage> {
               if (data[index]['file'].toString().endsWith('.mp4')) {
                 // display video
                 _videoPlayerController = VideoPlayerController.network(
-                  'https://unpasset.testweb.skom.id/storage/uploads/video/${data[index]['file']}',
+                  'http://192.168.202.40:3000/storage/uploads/video/${data[index]['file']}',
                 );
                 _chewieController = ChewieController(
                   videoPlayerController: _videoPlayerController,

@@ -31,7 +31,7 @@ class _UploadDataScreenState extends State<UploadDataScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      final url = Uri.parse("https://unpasset.testweb.skom.id/api/user/store");
+      final url = Uri.parse("http://192.168.202.40:3000/api/user/store");
       try {
         final bytes = await _file!.readAsBytes();
         final base64Image = base64Encode(bytes);
@@ -46,7 +46,7 @@ class _UploadDataScreenState extends State<UploadDataScreen> {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization':
-                "Bearer 149|idBJ8hTJbaQ0WY5cz1bRWxtsAEOUhvtEstae4KE1",
+                "Bearer 39|RQ134vEGFSUV7Km4je8F65sfjpCPaUTWh1UchECd",
           },
           body: json.encode({
             'title': _titleController.text,
@@ -89,9 +89,9 @@ class _UploadDataScreenState extends State<UploadDataScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Upload Data"),
-      ),
+      // appBar: AppBar(
+      //   title: Text("Upload Data"),
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -131,6 +131,10 @@ class _UploadDataScreenState extends State<UploadDataScreen> {
                         _file = file;
                       });
                     },
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Color.fromRGBO(212, 129, 102, 1)),
+                    ),
                     child: Text("Select File"),
                   ),
                 ),
@@ -154,6 +158,10 @@ class _UploadDataScreenState extends State<UploadDataScreen> {
               SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: _uploadData,
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(
+                      Color.fromRGBO(212, 129, 102, 1)),
+                ),
                 child: Text("Upload Data"),
               ),
             ],

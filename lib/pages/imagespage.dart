@@ -1,130 +1,154 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chewie/chewie.dart';
+import 'package:unp_asset/details/detailImage.dart';
+import 'package:video_player/video_player.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-
-import '../details/detailImage.dart';
+import 'dart:convert';
 
 class ImageListPage extends StatefulWidget {
-  String _searchText = '';
   @override
   _ImageListPageState createState() => _ImageListPageState();
 }
 
 class _ImageListPageState extends State<ImageListPage> {
-  List<dynamic> images = [];
+  List data = [];
+  late ChewieController _chewieController;
+  late VideoPlayerController _videoPlayerController;
+  AudioPlayer _audioPlayer = AudioPlayer();
+  final searchController = TextEditingController();
 
-  String _searchText = '';
+  Future fetchData() async {
+    // fetch data from API
+    // replace the API_URL with your own API URL
+    final response =
+        await http.get(Uri.parse('http://192.168.202.40:3000/api/user/index'));
+    if (response.statusCode == 200) {
+      setState(() {
+        data = json.decode(response.body)['data'];
+      });
+    } else {
+      throw Exception('Failed to fetch data');
+    }
+  }
+
+  void searchData(String query) {
+    // search data based on query
+    setState(() {
+      data = data
+          .where((item) =>
+              item['name'].toLowerCase().contains(query.toLowerCase()) ||
+              item['body'].toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    fetchImages();
+    fetchData();
   }
 
-  Future<void> fetchImages() async {
-    final response = await http.get(
-      Uri.parse('https://unpasset.testweb.skom.id/api/user/index'),
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        images = jsonDecode(response.body)['data']
-            .where((item) =>
-                item['category_id'] == '3' && item['file'].contains('.jpg'))
-            .toList();
-      });
-    } else {
-      throw Exception('Failed to load images');
-    }
-  }
-
-  List<dynamic> get filteredImages {
-    if (_searchText.isEmpty) {
-      return images;
-    }
-
-    final lowerSearchText = _searchText.toLowerCase();
-
-    return images
-        .where(
-          (item) =>
-              item['name'].toLowerCase().contains(lowerSearchText) ||
-              item['body'].toLowerCase().contains(lowerSearchText),
-        )
-        .toList();
+  @override
+  void dispose() {
+    super.dispose();
+    _videoPlayerController.dispose();
+    _chewieController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          decoration: InputDecoration(
-            hintText: 'Search...',
-            hintStyle: TextStyle(color: Colors.white54),
-            border: InputBorder.none,
-          ),
-          style: TextStyle(color: Colors.white),
-          onChanged: (value) {
-            setState(() {
-              _searchText = value;
-            });
-          },
-        ),
-      ),
-      body: GridView.builder(
-        gridDelegate:
-            SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
-        itemCount: filteredImages.length,
-        itemBuilder: (context, index) {
-          final image = filteredImages[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DetailImage(
-                    image: image,
-                  ),
-                ),
-              );
-            },
-            child: Card(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Image.network(
-                      'https://unpasset.testweb.skom.id/storage/uploads/photo/' +
-                          image['file'],
-                      fit: BoxFit.fitWidth,
-                      loadingBuilder: (BuildContext context, Widget child,
-                          ImageChunkEvent? loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 8.0),
-                  Text(image['name']),
-                  SizedBox(height: 4.0),
-                  Text(image['body']),
-                ],
+      body: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('asset/images/background.jpg'),
+                fit: BoxFit.cover,
               ),
             ),
-          );
-        },
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200]?.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search',
+                          border: InputBorder.none,
+                        ),
+                        onSubmitted: (query) {
+                          searchData(query);
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.search_sharp),
+                      onPressed: () {
+                        searchData(searchController.text);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+                itemCount: data.length,
+                itemBuilder: (BuildContext context, int index) {
+                  if (data[index]['file'].toString().endsWith('.jpg')) {
+                    // display image
+                    return Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => detailImage(
+                                title: data[index]['name'],
+                                body: data[index]['body'],
+                                imageUrl:
+                                    'http://192.168.202.40:3000/storage/uploads/photo/${data[index]['file']}',
+                              ),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CachedNetworkImage(
+                              imageUrl:
+                                  'http://192.168.202.40:3000/storage/uploads/photo/${data[index]['file']}',
+                              placeholder: (context, url) =>
+                                  CircularProgressIndicator(),
+                              errorWidget: (context, url, error) =>
+                                  Icon(Icons.error),
+                            ),
+                            SizedBox(height: 10),
+                            Text(data[index]['name'],
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            SizedBox(height: 5),
+                            Text(data[index]['body']),
+                          ],
+                        ),
+                      ),
+                    );
+                  } else {
+                    return Container();
+                  }
+                }),
+          ),
+        ],
       ),
     );
   }

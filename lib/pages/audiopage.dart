@@ -17,7 +17,7 @@ class _AudioListPageState extends State<AudioListPage> {
     // fetch data from API
     // replace the API_URL with your own API URL
     final response = await http
-        .get(Uri.parse('https://unpasset.testweb.skom.id/api/user/index'));
+        .get(Uri.parse('http://192.168.202.40:3000/api/user/index'));
     if (response.statusCode == 200) {
       setState(() {
         data = json.decode(response.body)['data'];
@@ -110,7 +110,7 @@ class _AudioListPageState extends State<AudioListPage> {
                           } else if (_audioPlayer.state == PlayerState.paused ||
                               _audioPlayer.state == PlayerState.stopped) {
                             _audioPlayer.play(UrlSource(
-                                'https://unpasset.testweb.skom.id/storage/uploads/audio/${data[index]['file']}'));
+                                'http://192.168.202.40:3000/storage/uploads/audio/${data[index]['file']}'));
                           }
                         },
                       ),
@@ -120,7 +120,7 @@ class _AudioListPageState extends State<AudioListPage> {
                         } else if (_audioPlayer.state == PlayerState.paused ||
                             _audioPlayer.state == PlayerState.stopped) {
                           _audioPlayer.play(UrlSource(
-                              'https://unpasset.testweb.skom.id/storage/uploads/audio/${data[index]['file']}'));
+                              'http://192.168.202.40:3000/storage/uploads/audio/${data[index]['file']}'));
                         }
                       },
                     ),

@@ -12,6 +12,7 @@ class tabPage extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Color.fromRGBO(212, 129, 102, 1),
           title: Text('Tab'),
           bottom: TabBar(
             tabs: [

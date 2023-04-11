@@ -21,7 +21,7 @@ class _homepageState extends State<homepage> {
   Future fetchData() async {
     // fetch data from API
     // replace the API_URL with your own API URL
-    final response = await http.get(Uri.parse('https://unpasset.testweb.skom.id/api/user/index'));
+    final response = await http.get(Uri.parse('http://192.168.202.40:3000/api/user/index'));
     if (response.statusCode == 200) {
       setState(() {
         data = json.decode(response.body)['data'];
@@ -127,7 +127,7 @@ class _homepageState extends State<homepage> {
                     children: [
                       CachedNetworkImage(
                         imageUrl:
-                            'https://unpasset.testweb.skom.id/storage/uploads/photo/${data[index]['file']}',
+                            'http://192.168.202.40:3000/storage/uploads/photo/${data[index]['file']}',
                         placeholder: (context, url) =>
                             CircularProgressIndicator(),
                         errorWidget: (context, url, error) => Icon(Icons.error),
@@ -144,7 +144,7 @@ class _homepageState extends State<homepage> {
             } else if (data[index]['file'].toString().endsWith('.mp4')) {
               // display video
               _videoPlayerController = VideoPlayerController.network(
-                'https://unpasset.testweb.skom.id/storage/uploads/video/${data[index]['file']}',
+                'http://192.168.202.40:3000/storage/uploads/video/${data[index]['file']}',
               );
               _chewieController = ChewieController(
                 videoPlayerController: _videoPlayerController,
@@ -190,7 +190,7 @@ class _homepageState extends State<homepage> {
                       } else if (_audioPlayer.state == PlayerState.paused ||
                           _audioPlayer.state == PlayerState.stopped) {
                         _audioPlayer.play(UrlSource(
-                            'https://unpasset.testweb.skom.id/storage/uploads/audio/${data[index]['file']}'));
+                            'http://192.168.202.40:3000/storage/uploads/audio/${data[index]['file']}'));
                       }
                     },
                   ),
@@ -200,7 +200,7 @@ class _homepageState extends State<homepage> {
                     } else if (_audioPlayer.state == PlayerState.paused ||
                         _audioPlayer.state == PlayerState.stopped) {
                       _audioPlayer.play(UrlSource(
-                          'https://unpasset.testweb.skom.id/storage/uploads/audio/${data[index]['file']}'));
+                          'http://192.168.202.40:3000/storage/uploads/audio/${data[index]['file']}'));
                     }
                   },
                 ),

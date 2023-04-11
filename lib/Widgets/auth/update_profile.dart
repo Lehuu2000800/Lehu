@@ -50,7 +50,7 @@ class _updateState extends State<update> {
         finalId = value;
       });
     var url =
-        Uri.parse('https://unpasset.testweb.skom.id/api/user/update-user/$finalId');
+        Uri.parse('http://192.168.202.40:3000/api/user/update-user/$finalId');
     var response = await http.patch(
       url,
       headers: <String, String>{
