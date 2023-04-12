@@ -28,70 +28,61 @@ class _UploadDataScreenState extends State<UploadDataScreen> {
   }
 
   Future<void> _uploadData() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+  if (_formKey.currentState!.validate()) {
+    _formKey.currentState!.save();
 
-      final url = Uri.parse("http://192.168.202.40:3000/api/user/store");
-      try {
-        final bytes = await _file!.readAsBytes();
-        final base64Image = base64Encode(bytes);
-        if (base64Image == null || base64Image.isEmpty) {
-          // Handling jika encoding base64 gagal
-          throw Exception("Failed to encode file to base64");
-        }
-
-        final response = await http.post(
-          url,
-          headers: <String, String>{
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization':
-                "Bearer 39|RQ134vEGFSUV7Km4je8F65sfjpCPaUTWh1UchECd",
-          },
-          body: json.encode({
-            'title': _titleController.text,
-            'file': base64Image,
-            'body': _bodyController.text,
-            'category_id': _categoryController.text,
-          }),
-        );
-
-        if (response.statusCode == 200) {
-          // Upload data berhasil
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Data berhasil diupload"),
-            duration: Duration(seconds: 2),
-          ));
-        } else {
-          // Upload data gagal
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text("Upload Gagal"),
-              content: Text(
-                  "Terjadi kesalahan saat mengupload data. Silakan coba lagi."),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("OK"),
-                ),
-              ],
-            ),
-          );
-        }
-      } catch (e) {
-        // Tambahkan code untuk menangani kesalahan yang terjadi saat upload data
-        print(e.toString());
+    final url = Uri.parse("http://192.168.202.40:3000/api/user/store");
+    try {
+      if (_file == null) {
+        // Handling jika file belum dipilih
+        throw Exception("File belum dipilih");
       }
+
+      final request = http.MultipartRequest('POST', url)
+        ..headers['Authorization'] =
+            "Bearer 39|RQ134vEGFSUV7Km4je8F65sfjpCPaUTWh1UchECd"
+        ..fields['title'] = _titleController.text
+        ..fields['body'] = _bodyController.text
+        ..fields['category_id'] = _categoryController.text
+        ..files.add(await http.MultipartFile.fromPath('file', _file!.path));
+
+      final response = await request.send();
+
+      if (response.statusCode == 201) {
+        // Upload data berhasil
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Data berhasil diupload"),
+          duration: Duration(seconds: 2),
+        ));
+      } else {
+        // Upload data gagal
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Upload Gagal"),
+            content: Text(
+                "Terjadi kesalahan saat mengupload data. Silakan coba lagi."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("OK"),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      // Tambahkan code untuk menangani kesalahan yang terjadi saat upload data
+      print(e.toString());
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text("Upload Data"),
-      // ),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
